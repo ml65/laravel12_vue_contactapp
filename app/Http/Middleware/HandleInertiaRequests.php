@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Middleware;
 
+use Illuminate\Http\Request;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Inertia\Middleware;
 
