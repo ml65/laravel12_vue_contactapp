@@ -4,10 +4,7 @@
     <a href="/" class="hover:underline">Контакты</a>
     <a href="/information" class="hover:underline">О проекте</a>
     <template v-if="isAuthenticated">
-      <form :action="logoutUrl" method="POST" class="ml-auto" @submit="clearAuth">
-        <input type="hidden" name="_token" :value="csrf" />
-        <button type="submit" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded">Выйти</button>
-      </form>
+        <button type="submit" @click="logout" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded">Выйти</button>
     </template>
     <template v-else>
       <a href="/login" class="ml-auto bg-green-500 hover:bg-green-600 px-3 py-1 rounded">Войти</a>
@@ -17,20 +14,15 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { Inertia } from '@inertiajs/inertia';
 
 const isAuthenticated = computed(() => !!localStorage.getItem('api_token'));
-const logoutUrl = '/logout';
 
-// Получаем CSRF-токен из cookie
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
-}
-const csrf = ref(getCookie('XSRF-TOKEN'));
-
-// Очищаем localStorage после выхода
-function clearAuth() {
-  localStorage.removeItem('api_token');
-}
+const logout = async () => {
+  try {
+    await Inertia.post('/logout');
+  } catch (error) {
+    console.error('Logout failed:', error);
+  }
+};
 </script> 
