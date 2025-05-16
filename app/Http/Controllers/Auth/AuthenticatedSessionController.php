@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Cookie;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -18,6 +19,10 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): Response
     {
+        if (Auth::check()) {
+            dd(111);
+            return redirect('/');
+        }
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
@@ -44,10 +49,10 @@ class AuthenticatedSessionController extends Controller
     /**
      * Destroy an authenticated session.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request)
     {
         // Удаляем все токены пользователя при выходе
-        Auth::user()->tokens()->delete();
+        Auth::user()?->tokens()->delete();
         
         Auth::guard('web')->logout();
 
@@ -55,6 +60,15 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // Удаляем куки сессии и XSRF-TOKEN
+        $sessionCookie = Cookie::forget(config('session.cookie'));
+        $xsrfCookie = Cookie::forget('XSRF-TOKEN');
+        $rememberCookie = Cookie::forget(Auth::getRecallerName());
+
+        return response()
+            ->json(['message' => 'Выход выполнен успешно'])
+            ->withCookie($sessionCookie)
+            ->withCookie($xsrfCookie)
+            ->withCookie($rememberCookie);
     }
 }

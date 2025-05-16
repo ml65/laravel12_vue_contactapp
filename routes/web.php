@@ -12,3 +12,8 @@ Route::get('/', function () {
         'contacts' => Contact::all(),
     ]);
 })->middleware('auth');
+
+// Страница информации о проекте
+Route::get('/information', function () {
+    return Inertia::render('Information');
+});
