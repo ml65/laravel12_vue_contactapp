@@ -76,9 +76,13 @@
         try {
           const method = editing.value ? 'put' : 'post';
           const url = editing.value ? `/api/contacts/${form.value.id}` : '/api/contacts';
+          const token = localStorage.getItem('api_token');
           const response = await fetch(url, {
             method,
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
             body: JSON.stringify(form.value),
           });
           if (!response.ok) {
@@ -108,7 +112,13 @@
   
       const deleteContact = async (contact) => {
         if (confirm('Are you sure?')) {
-          await fetch(`/api/contacts/${contact.id}`, { method: 'delete' });
+          const token = localStorage.getItem('api_token');
+          await fetch(`/api/contacts/${contact.id}`, {
+            method: 'delete',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
           Inertia.reload();
         }
       };

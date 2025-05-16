@@ -24,12 +24,30 @@ const form = useForm({
 const errors = ref('')
 const processing = ref(false)
 
-const submit = () => {
-    form.post(route('login'), {
-        onFinish: () => {
-            form.reset('password');
-        },
-    });
+const submit = async () => {
+    processing.value = true;
+    errors.value = '';
+    try {
+        const response = await axios.post('/login', {
+            email: form.email,
+            password: form.password,
+            remember: form.remember,
+        });
+        if (response.data.token) {
+            localStorage.setItem('api_token', response.data.token);
+            // Можно сохранить пользователя, если нужно: localStorage.setItem('user', JSON.stringify(response.data.user));
+            window.location.href = '/';
+        }
+    } catch (error) {
+        if (error.response && error.response.data && error.response.data.message) {
+            errors.value = error.response.data.message;
+        } else {
+            errors.value = 'Ошибка входа. Проверьте данные.';
+        }
+    } finally {
+        processing.value = false;
+        form.reset('password');
+    }
 };
 </script>
 
