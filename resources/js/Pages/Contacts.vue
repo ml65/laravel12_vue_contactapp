@@ -3,9 +3,9 @@
     <MainMenu />
     <div class="container mx-auto p-4">
       <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-bold">Contacts</h1>
+        <h1 class="text-2xl font-bold">{{ t('contacts') }}</h1>
         <button @click="openCreateModal" class="bg-green-500 text-white px-4 py-2 rounded">
-          Создать
+          {{ t('create') }}
         </button>
       </div>
 
@@ -13,7 +13,7 @@
       <div v-if="showModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
         <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
           <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-semibold">{{ editing ? 'Edit Contact' : 'Create Contact' }}</h2>
+            <h2 class="text-lg font-semibold">{{ editing ? t('edit') : t('create') }}</h2>
             <button @click="closeModal" class="text-gray-500 hover:text-gray-700">
               <span class="text-2xl">&times;</span>
             </button>
@@ -30,17 +30,17 @@
 
           <form @submit.prevent="saveContact">
             <div class="mb-2">
-              <label class="block">Name</label>
+              <label class="block">{{ t('name') }}</label>
               <input v-model="form.name" class="border p-2 w-full" required />
               <div v-if="errors.name" class="text-red-500">{{ errors.name[0] }}</div>
             </div>
             <div class="mb-2">
-              <label class="block">Email</label>
+              <label class="block">{{ t('email') }}</label>
               <input v-model="form.email" class="border p-2 w-full" type="email" required />
               <div v-if="errors.email" class="text-red-500">{{ errors.email[0] }}</div>
             </div>
             <div class="mb-2">
-              <label class="block">Phone</label>
+              <label class="block">{{ t('phone') }}</label>
               <input 
                 v-model="form.phone" 
                 @input="formatPhone"
@@ -50,7 +50,7 @@
               <div v-if="errors.phone" class="text-red-500">{{ errors.phone[0] }}</div>
             </div>
             <div class="mb-2">
-              <label class="block">Tags</label>
+              <label class="block">{{ t('tags') }}</label>
               <select v-model="form.tags" multiple class="border p-2 w-full">
                 <option v-for="tag in availableTags" :key="tag.id" :value="tag.id">
                   {{ tag.name }}
@@ -59,10 +59,10 @@
             </div>
             <div class="flex justify-end space-x-2">
               <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
-                {{ editing ? 'Update' : 'Create' }}
+                {{ editing ? t('update') : t('create') }}
               </button>
               <button type="button" @click="closeModal" class="bg-gray-500 text-white px-4 py-2 rounded">
-                Cancel
+                {{ t('cancel') }}
               </button>
             </div>
           </form>
@@ -75,7 +75,7 @@
           <tr class="bg-gray-100">
             <th class="p-2">
               <div class="flex items-center justify-between cursor-pointer" @click="sortBy('name')">
-                <div class="mb-2">Name</div>
+                <div class="mb-2">{{ t('name') }}</div>
                 <span v-if="sortKey === 'name'" class="ml-2">
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
@@ -83,13 +83,13 @@
               <input 
                 v-model="filters.name" 
                 @input="filterContacts"
-                placeholder="Filter by name..."
+                :placeholder="t('filterByName')"
                 class="w-full p-1 text-sm border rounded"
               />
             </th>
             <th class="p-2">
               <div class="flex items-center justify-between cursor-pointer" @click="sortBy('email')">
-                <div class="mb-2">Email</div>
+                <div class="mb-2">{{ t('email') }}</div>
                 <span v-if="sortKey === 'email'" class="ml-2">
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
@@ -97,13 +97,13 @@
               <input 
                 v-model="filters.email" 
                 @input="filterContacts"
-                placeholder="Filter by email..."
+                :placeholder="t('filterByEmail')"
                 class="w-full p-1 text-sm border rounded"
               />
             </th>
             <th class="p-2">
               <div class="flex items-center justify-between cursor-pointer" @click="sortBy('phone')">
-                <div class="mb-2">Phone</div>
+                <div class="mb-2">{{ t('phone') }}</div>
                 <span v-if="sortKey === 'phone'" class="ml-2">
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
@@ -111,24 +111,24 @@
               <input 
                 v-model="filters.phone" 
                 @input="filterContacts"
-                placeholder="Filter by phone..."
+                :placeholder="t('filterByPhone')"
                 class="w-full p-1 text-sm border rounded"
               />
             </th>
             <th class="p-2">
-              <div class="mb-2">Tags</div>
+              <div class="mb-2">{{ t('tags') }}</div>
               <select 
                 v-model="filters.tag" 
                 @change="filterContacts"
                 class="w-full p-1 text-sm border rounded"
               >
-                <option value="">All tags</option>
+                <option value="">{{ t('allTags') }}</option>
                 <option v-for="tag in availableTags" :key="tag.id" :value="tag.id">
                   {{ tag.name }}
                 </option>
               </select>
             </th>
-            <th class="p-2">Actions</th>
+            <th class="p-2">{{ t('actions') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -142,8 +142,8 @@
               </span>
             </td>
             <td class="p-2">
-              <button @click="editContact(contact)" class="text-blue-500 mr-2">Edit</button>
-              <button @click="deleteContact(contact)" class="text-red-500">Delete</button>
+              <button @click="editContact(contact)" class="text-blue-500 mr-2">{{ t('edit') }}</button>
+              <button @click="deleteContact(contact)" class="text-red-500">{{ t('delete') }}</button>
             </td>
           </tr>
         </tbody>
@@ -157,6 +157,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { Inertia } from '@inertiajs/inertia';
 import MainMenu from '@/Components/MainMenu.vue';
 import { parsePhoneNumber, isValidPhoneNumber, AsYouType } from 'libphonenumber-js';
+import { useI18n } from '@/composables/useI18n';
 
 export default {
   props: {
@@ -165,6 +166,7 @@ export default {
   },
   components: { MainMenu },
   setup(props) {
+    const { t } = useI18n();
     const form = ref({
       id: null,
       name: '',
@@ -331,16 +333,14 @@ export default {
 
     const saveContact = async () => {
       try {
-        // Очищаем предыдущие ошибки и уведомления
         errors.value = {};
         notification.value = { message: '', type: 'info' };
 
-        // Валидация формы
         const validationErrors = validateForm();
         if (Object.keys(validationErrors).length > 0) {
           errors.value = validationErrors;
           notification.value = {
-            message: 'Пожалуйста, исправьте ошибки в форме',
+            message: t('fixErrors'),
             type: 'error'
           };
           return;
@@ -363,18 +363,17 @@ export default {
         if (!response.ok) {
           errors.value = data.errors || {};
           notification.value = {
-            message: 'Произошла ошибка при сохранении контакта',
+            message: t('errorSaving'),
             type: 'error'
           };
           return;
         }
 
         notification.value = {
-          message: editing.value ? 'Контакт успешно обновлен' : 'Контакт успешно создан',
+          message: editing.value ? t('contactUpdated') : t('contactCreated'),
           type: 'success'
         };
 
-        // Закрываем модальное окно через небольшую задержку
         setTimeout(() => {
           closeModal();
           Inertia.reload();
@@ -383,7 +382,7 @@ export default {
       } catch (error) {
         console.error(error);
         notification.value = {
-          message: 'Произошла ошибка при сохранении контакта',
+          message: t('errorSaving'),
           type: 'error'
         };
       }
@@ -401,7 +400,7 @@ export default {
     };
 
     const deleteContact = async (contact) => {
-      if (confirm('Are you sure?')) {
+      if (confirm(t('confirmDelete'))) {
         const token = localStorage.getItem('api_token');
         await fetch(`/api/contacts/${contact.id}`, {
           method: 'delete',
@@ -432,7 +431,8 @@ export default {
       sortKey,
       sortDirection,
       notification,
-      formatPhone
+      formatPhone,
+      t
     };
   },
 };
