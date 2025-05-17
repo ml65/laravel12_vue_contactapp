@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Contact extends Model
 {
@@ -12,4 +13,12 @@ class Contact extends Model
         'email',
         'phone',
     ];
+
+    /**
+     * Получить теги, связанные с контактом
+     */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class);
+    }
 }

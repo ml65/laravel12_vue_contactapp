@@ -2,33 +2,57 @@
   <div>
     <MainMenu />
     <div class="container mx-auto p-4">
-      <h1 class="text-2xl font-bold mb-4">Contacts</h1>
-      <!-- Форма создания/редактирования контакта -->
-      <div class="mb-4 p-4 border rounded">
-        <h2 class="text-lg font-semibold">{{ editing ? 'Edit Contact' : 'Create Contact' }}</h2>
-        <form @submit.prevent="saveContact">
-          <div class="mb-2">
-            <label class="block">Name</label>
-            <input v-model="form.name" class="border p-2 w-full" required />
-            <div v-if="errors.name" class="text-red-500">{{ errors.name[0] }}</div>
-          </div>
-          <div class="mb-2">
-            <label class="block">Email</label>
-            <input v-model="form.email" class="border p-2 w-full" type="email" required />
-            <div v-if="errors.email" class="text-red-500">{{ errors.email[0] }}</div>
-          </div>
-          <div class="mb-2">
-            <label class="block">Phone</label>
-            <input v-model="form.phone" class="border p-2 w-full" />
-          </div>
-          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
-            {{ editing ? 'Update' : 'Create' }}
-          </button>
-          <button v-if="editing" @click="cancelEdit" class="ml-2 bg-gray-500 text-white px-4 py-2 rounded">
-            Cancel
-          </button>
-        </form>
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">Contacts</h1>
+        <button @click="openCreateModal" class="bg-green-500 text-white px-4 py-2 rounded">
+          Создать
+        </button>
       </div>
+
+      <!-- Модальное окно -->
+      <div v-if="showModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold">{{ editing ? 'Edit Contact' : 'Create Contact' }}</h2>
+            <button @click="closeModal" class="text-gray-500 hover:text-gray-700">
+              <span class="text-2xl">&times;</span>
+            </button>
+          </div>
+          <form @submit.prevent="saveContact">
+            <div class="mb-2">
+              <label class="block">Name</label>
+              <input v-model="form.name" class="border p-2 w-full" required />
+              <div v-if="errors.name" class="text-red-500">{{ errors.name[0] }}</div>
+            </div>
+            <div class="mb-2">
+              <label class="block">Email</label>
+              <input v-model="form.email" class="border p-2 w-full" type="email" required />
+              <div v-if="errors.email" class="text-red-500">{{ errors.email[0] }}</div>
+            </div>
+            <div class="mb-2">
+              <label class="block">Phone</label>
+              <input v-model="form.phone" class="border p-2 w-full" />
+            </div>
+            <div class="mb-2">
+              <label class="block">Tags</label>
+              <select v-model="form.tags" multiple class="border p-2 w-full">
+                <option v-for="tag in availableTags" :key="tag.id" :value="tag.id">
+                  {{ tag.name }}
+                </option>
+              </select>
+            </div>
+            <div class="flex justify-end space-x-2">
+              <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
+                {{ editing ? 'Update' : 'Create' }}
+              </button>
+              <button type="button" @click="closeModal" class="bg-gray-500 text-white px-4 py-2 rounded">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <!-- Список контактов -->
       <table class="w-full border">
         <thead>
@@ -36,6 +60,7 @@
             <th class="p-2">Name</th>
             <th class="p-2">Email</th>
             <th class="p-2">Phone</th>
+            <th class="p-2">Tags</th>
             <th class="p-2">Actions</th>
           </tr>
         </thead>
@@ -44,6 +69,11 @@
             <td class="p-2">{{ contact.name }}</td>
             <td class="p-2">{{ contact.email }}</td>
             <td class="p-2">{{ contact.phone }}</td>
+            <td class="p-2">
+              <span v-for="tag in contact.tags" :key="tag.id" class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2">
+                {{ tag.name }}
+              </span>
+            </td>
             <td class="p-2">
               <button @click="editContact(contact)" class="text-blue-500 mr-2">Edit</button>
               <button @click="deleteContact(contact)" class="text-red-500">Delete</button>
@@ -63,6 +93,7 @@ import MainMenu from '@/Components/MainMenu.vue';
 export default {
   props: {
     contacts: Array,
+    tags: Array,
   },
   components: { MainMenu },
   setup(props) {
@@ -71,9 +102,12 @@ export default {
       name: '',
       email: '',
       phone: '',
+      tags: [],
     });
     const editing = ref(false);
     const errors = ref({});
+    const showModal = ref(false);
+    const availableTags = computed(() => props.tags || []);
 
     const isAuthenticated = computed(() => !!localStorage.getItem('api_token'));
 
@@ -83,6 +117,19 @@ export default {
         window.location.href = '/login';
       }
     });
+
+    const openCreateModal = () => {
+      editing.value = false;
+      form.value = { id: null, name: '', email: '', phone: '', tags: [] };
+      showModal.value = true;
+    };
+
+    const closeModal = () => {
+      showModal.value = false;
+      editing.value = false;
+      form.value = { id: null, name: '', email: '', phone: '', tags: [] };
+      errors.value = {};
+    };
 
     const saveContact = async () => {
       try {
@@ -103,8 +150,7 @@ export default {
           return;
         }
         errors.value = {};
-        form.value = { id: null, name: '', email: '', phone: '' };
-        editing.value = false;
+        closeModal();
         Inertia.reload();
       } catch (error) {
         console.error(error);
@@ -112,14 +158,14 @@ export default {
     };
 
     const editContact = (contact) => {
-      form.value = { ...contact };
+      // Преобразуем теги в массив ID для корректной работы с select
+      const tagIds = contact.tags.map(tag => tag.id);
+      form.value = {
+        ...contact,
+        tags: tagIds
+      };
       editing.value = true;
-    };
-
-    const cancelEdit = () => {
-      form.value = { id: null, name: '', email: '', phone: '' };
-      editing.value = false;
-      errors.value = {};
+      showModal.value = true;
     };
 
     const deleteContact = async (contact) => {
@@ -135,21 +181,18 @@ export default {
       }
     };
 
-    // Логика выхода
-    const logout = async () => {
-      const token = localStorage.getItem('api_token');
-      await fetch('/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      localStorage.removeItem('api_token');
-      window.location.href = '/information';
+    return { 
+      form, 
+      editing, 
+      errors, 
+      showModal,
+      saveContact, 
+      editContact, 
+      deleteContact, 
+      openCreateModal,
+      closeModal,
+      availableTags 
     };
-
-    return { form, editing, errors, saveContact, editContact, cancelEdit, deleteContact, logout, isAuthenticated };
   },
 };
 </script>
