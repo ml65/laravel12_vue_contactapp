@@ -1,11 +1,13 @@
 <?php
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\NotificationServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
-use App\Services\TelegramService;
+use App\Services\ContactNotificationFormatter;
+use App\Services\ContactValidationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 /**
  * @OA\Info(
@@ -19,11 +21,18 @@ use Illuminate\Support\Facades\Validator;
  */
 class ContactController extends Controller
 {
-    protected $telegramService;
+    private $notificationService;
+    private $validationService;
+    private $notificationFormatter;
 
-    public function __construct(TelegramService $telegramService)
-    {
-        $this->telegramService = $telegramService;
+    public function __construct(
+        NotificationServiceInterface $notificationService,
+        ContactValidationService $validationService,
+        ContactNotificationFormatter $notificationFormatter
+    ) {
+        $this->notificationService = $notificationService;
+        $this->validationService = $validationService;
+        $this->notificationFormatter = $notificationFormatter;
     }
 
     /**
@@ -55,9 +64,6 @@ class ContactController extends Controller
      */
     public function index()
     {
-        $fc = fopen('/tmp/contacts.txt', 'a');
-        $contacts = Contact::with('tags')->get();
-        fwrite($fc, var_export($contacts, true));
         return response()->json(Contact::with('tags')->get());
     }
 
@@ -89,39 +95,21 @@ class ContactController extends Controller
      */
     public function store(Request $request)
     {
-        $fc = fopen('/tmp/contacts.txt', 'a');
-        fwrite($fc, var_export($request->all(), true));
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:contacts',
-            'phone' => 'nullable|string|max:20',
-            'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id'
-        ]);
+        try {
+            $data = $this->validationService->validate($request->all());
+            $contact = Contact::create($data);
+            
+            if ($request->has('tags')) {
+                $contact->tags()->sync($request->tags);
+            }
 
-        fwrite($fc, var_export($validator->errors(), true));
+            $message = $this->notificationFormatter->formatCreated($contact);
+            $this->notificationService->send($message);
 
-        if ($validator->fails()) {
-            fwrite($fc, var_export($validator->errors(), true));
-            return response()->json($validator->errors(), 422);
+            return response()->json($contact->load('tags'), 201);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
         }
-
-        $contact = Contact::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-        ]);
-        fwrite($fc, var_export($contact, true));
-        if ($request->has('tags')) {
-            fwrite($fc, var_export($request->tags, true));
-            $contact->tags()->sync($request->tags);
-        }
-        fwrite($fc, var_export($contact->load('tags'), true));
-
-        // Отправляем уведомление в Telegram
-        $this->sendTelegramNotification($contact, 'created');
-
-        return response()->json($contact->load('tags'), 201);
     }
 
     /**
@@ -187,31 +175,21 @@ class ContactController extends Controller
      */
     public function update(Request $request, Contact $contact)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:contacts,email,' . $contact->id,
-            'phone' => 'nullable|string|max:20',
-            'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id'
-        ]);
+        try {
+            $data = $this->validationService->validate($request->all(), $contact);
+            $contact->update($data);
+            
+            if ($request->has('tags')) {
+                $contact->tags()->sync($request->tags);
+            }
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            $message = $this->notificationFormatter->formatUpdated($contact);
+            $this->notificationService->send($message);
+
+            return response()->json($contact->load('tags'));
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
         }
-
-        $contact->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-        ]);
-        if ($request->has('tags')) {
-            $contact->tags()->sync($request->tags);
-        }
-
-        // Отправляем уведомление в Telegram
-        $this->sendTelegramNotification($contact, 'updated');
-
-        return response()->json($contact->load('tags'));
     }
 
     /**
@@ -241,25 +219,5 @@ class ContactController extends Controller
     {
         $contact->delete();
         return response()->json(null, 204);
-    }
-
-    protected function sendTelegramNotification(Contact $contact, string $action)
-    {
-        $tags = $contact->tags->pluck('name')->join(', ');
-        $tagsText = $tags ? "\nТеги: {$tags}" : '';
-
-        $message = sprintf(
-            "🔔 <b>Контакт %s</b>\n\n" .
-            "Имя: %s\n" .
-            "Email: %s\n" .
-            "Телефон: %s%s",
-            $action === 'created' ? 'создан' : 'обновлен',
-            $contact->name,
-            $contact->email,
-            $contact->phone ?? 'не указан',
-            $tagsText
-        );
-
-        $this->telegramService->sendMessage($message);
     }
 }

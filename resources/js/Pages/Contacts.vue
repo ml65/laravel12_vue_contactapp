@@ -153,7 +153,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { Inertia } from '@inertiajs/inertia';
 import MainMenu from '@/Components/MainMenu.vue';
 import { parsePhoneNumber, isValidPhoneNumber, AsYouType } from 'libphonenumber-js';
@@ -178,7 +178,6 @@ export default {
     const errors = ref({});
     const showModal = ref(false);
     const availableTags = computed(() => props.tags || []);
-    const phoneFormatter = new AsYouType('RU');
 
     // Состояние для сортировки
     const sortKey = ref('');
@@ -283,16 +282,19 @@ export default {
     // Форматирование телефона при вводе
     const formatPhone = (event) => {
       const input = event.target;
-      const cursorPosition = input.selectionStart;
       const oldValue = form.value.phone;
       const oldLength = oldValue.length;
-      
-      // Форматируем номер
-      const formattedNumber = phoneFormatter.input(input.value);
+      const cursorPosition = input.selectionStart;
+
+      // Создаём новый экземпляр AsYouType для каждого ввода
+      const formatter = new AsYouType('RU');
+      const formattedNumber = formatter.input(input.value);
+
+      if (formattedNumber === oldValue) return;
+
       form.value.phone = formattedNumber;
 
-      // Восстанавливаем позицию курсора
-      this.$nextTick(() => {
+      nextTick(() => {
         const newLength = formattedNumber.length;
         const newPosition = cursorPosition + (newLength - oldLength);
         input.setSelectionRange(newPosition, newPosition);

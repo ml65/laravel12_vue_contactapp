@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
+use App\Contracts\NotificationServiceInterface;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-class TelegramService
+class TelegramService implements NotificationServiceInterface
 {
     protected $botToken;
     protected $chatIds;
@@ -35,7 +36,7 @@ class TelegramService
         ]);
     }
 
-    public function sendMessage(string $message): bool
+    public function send(string $message): bool
     {
         $this->log("Attempting to send message", ['message_length' => strlen($message)]);
 
