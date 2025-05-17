@@ -1,7 +1,7 @@
 <?php
-namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+namespace App\Http\Controllers;
+
 use App\Models\Contact;
 use App\Services\TelegramService;
 use Illuminate\Http\Request;
@@ -16,53 +16,28 @@ class ContactController extends Controller
         $this->telegramService = $telegramService;
     }
 
-    public function index()
-    {
-        $fc = fopen('/tmp/contacts.txt', 'a');
-        $contacts = Contact::with('tags')->get();
-        fwrite($fc, var_export($contacts, true));
-        return response()->json(Contact::with('tags')->get());
-    }
-
     public function store(Request $request)
     {
-        $fc = fopen('/tmp/contacts.txt', 'a');
-        fwrite($fc, var_export($request->all(), true));
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:contacts',
+            'email' => 'required|email|unique:contacts,email',
             'phone' => 'nullable|string|max:20',
             'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id'
         ]);
-
-        fwrite($fc, var_export($validator->errors(), true));
 
         if ($validator->fails()) {
-            fwrite($fc, var_export($validator->errors(), true));
-            return response()->json($validator->errors(), 422);
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $contact = Contact::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-        ]);
-        fwrite($fc, var_export($contact, true));
+        $contact = Contact::create($request->all());
+
         if ($request->has('tags')) {
-            fwrite($fc, var_export($request->tags, true));
             $contact->tags()->sync($request->tags);
         }
-        fwrite($fc, var_export($contact->load('tags'), true));
 
         // Отправляем уведомление в Telegram
         $this->sendTelegramNotification($contact, 'created');
 
-        return response()->json($contact->load('tags'), 201);
-    }
-
-    public function show(Contact $contact)
-    {
         return response()->json($contact->load('tags'));
     }
 
@@ -70,21 +45,17 @@ class ContactController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:contacts,email,' . $contact->id,
+            'email' => 'required|email|unique:contacts,email,' . $contact->id,
             'phone' => 'nullable|string|max:20',
             'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id'
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $contact->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-        ]);
+        $contact->update($request->all());
+
         if ($request->has('tags')) {
             $contact->tags()->sync($request->tags);
         }
@@ -93,12 +64,6 @@ class ContactController extends Controller
         $this->sendTelegramNotification($contact, 'updated');
 
         return response()->json($contact->load('tags'));
-    }
-
-    public function destroy(Contact $contact)
-    {
-        $contact->delete();
-        return response()->json(null, 204);
     }
 
     protected function sendTelegramNotification(Contact $contact, string $action)
@@ -120,4 +85,4 @@ class ContactController extends Controller
 
         $this->telegramService->sendMessage($message);
     }
-}
+} 

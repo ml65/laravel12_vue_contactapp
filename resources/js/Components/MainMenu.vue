@@ -1,6 +1,5 @@
 <template>
   <nav class="bg-gray-800 text-white px-4 py-2 flex items-center space-x-6 mb-6">
-    <a href="/" class="hover:underline">Главная</a>
     <a href="/" class="hover:underline">Контакты</a>
     <a href="/information" class="hover:underline">О проекте</a>
     <template v-if="isAuthenticated">
