@@ -132,7 +132,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="contact in sortedAndFilteredContacts" :key="contact.id">
+          <tr v-for="contact in paginatedContacts" :key="contact.id">
             <td class="p-2">{{ contact.name }}</td>
             <td class="p-2">{{ contact.email }}</td>
             <td class="p-2">{{ contact.phone }}</td>
@@ -148,6 +148,40 @@
           </tr>
         </tbody>
       </table>
+
+      <!-- Пагинация -->
+      <div class="flex justify-between items-center mt-4">
+        <div class="text-sm text-gray-700">
+          {{ t('showing') }} {{ paginationStart }} - {{ paginationEnd }} {{ t('of') }} {{ sortedAndFilteredContacts.length }}
+        </div>
+        <div class="flex space-x-2">
+          <button 
+            @click="currentPage--" 
+            :disabled="currentPage === 1"
+            class="px-3 py-1 border rounded"
+            :class="{'opacity-50 cursor-not-allowed': currentPage === 1}"
+          >
+            {{ t('previous') }}
+          </button>
+          <button 
+            v-for="page in totalPages" 
+            :key="page"
+            @click="currentPage = page"
+            class="px-3 py-1 border rounded"
+            :class="{'bg-blue-500 text-white': currentPage === page}"
+          >
+            {{ page }}
+          </button>
+          <button 
+            @click="currentPage++" 
+            :disabled="currentPage === totalPages"
+            class="px-3 py-1 border rounded"
+            :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}"
+          >
+            {{ t('next') }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -196,6 +230,10 @@ export default {
       message: '',
       type: 'info' // 'info', 'success', 'error'
     });
+
+    // Добавляем состояния для пагинации
+    const currentPage = ref(1);
+    const itemsPerPage = ref(10);
 
     // Метод сортировки
     const sortBy = (key) => {
@@ -414,6 +452,33 @@ export default {
       }
     };
 
+    // Вычисляемые свойства для пагинации
+    const totalPages = computed(() => {
+      return Math.ceil(sortedAndFilteredContacts.value.length / itemsPerPage.value);
+    });
+
+    const paginationStart = computed(() => {
+      return (currentPage.value - 1) * itemsPerPage.value + 1;
+    });
+
+    const paginationEnd = computed(() => {
+      const end = currentPage.value * itemsPerPage.value;
+      return end > sortedAndFilteredContacts.value.length 
+        ? sortedAndFilteredContacts.value.length 
+        : end;
+    });
+
+    const paginatedContacts = computed(() => {
+      const start = (currentPage.value - 1) * itemsPerPage.value;
+      const end = start + itemsPerPage.value;
+      return sortedAndFilteredContacts.value.slice(start, end);
+    });
+
+    // Сбрасываем страницу при изменении фильтров
+    watch([filters], () => {
+      currentPage.value = 1;
+    });
+
     return { 
       form, 
       editing, 
@@ -434,7 +499,13 @@ export default {
       sortDirection,
       notification,
       formatPhone,
-      t
+      t,
+      currentPage,
+      itemsPerPage,
+      totalPages,
+      paginationStart,
+      paginationEnd,
+      paginatedContacts
     };
   },
 };

@@ -39,7 +39,7 @@
 
 ### 1. Клонирование репозитория
 ```bash
-git clone [URL репозитория]
+git clone git@github.com:ml65/laravel12_vue_contactapp.git
 cd contacts-vue-app
 ```
 

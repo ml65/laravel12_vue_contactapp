@@ -25,7 +25,11 @@ export const translations = {
         errorSaving: 'Error saving contact',
         emailExists: 'This email is already in use',
         invalidPhone: 'Invalid phone number format',
-        fixErrors: 'Please fix the errors in the form'
+        fixErrors: 'Please fix the errors in the form',
+        showing: 'Showing',
+        of: 'of',
+        previous: 'Previous',
+        next: 'Next'
     },
     ru: {
         contacts: 'Контакты',
@@ -53,6 +57,10 @@ export const translations = {
         errorSaving: 'Ошибка при сохранении контакта',
         emailExists: 'Этот email уже используется',
         invalidPhone: 'Неверный формат номера телефона',
-        fixErrors: 'Пожалуйста, исправьте ошибки в форме'
+        fixErrors: 'Пожалуйста, исправьте ошибки в форме',
+        showing: 'Показано',
+        of: 'из',
+        previous: 'Предыдущая',
+        next: 'Следующая'
     }
 }; 
