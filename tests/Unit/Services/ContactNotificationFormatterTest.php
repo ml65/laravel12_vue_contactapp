@@ -6,13 +6,14 @@ use App\Models\Contact;
 use App\Models\Tag;
 use App\Services\ContactNotificationFormatter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ContactNotificationFormatterTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function it_formats_created_message()
     {
         $contact = Contact::factory()->create([
@@ -28,7 +29,7 @@ class ContactNotificationFormatterTest extends TestCase
         $this->assertStringContainsString('+7 (999) 123-45-67', $msg);
     }
 
-    /** @test */
+    #[Test]
     public function it_formats_updated_message_with_tags()
     {
         $contact = Contact::factory()->create([

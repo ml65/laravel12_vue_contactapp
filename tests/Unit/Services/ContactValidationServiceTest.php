@@ -6,6 +6,7 @@ use App\Models\Contact;
 use App\Services\ContactValidationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ContactValidationServiceTest extends TestCase
@@ -20,7 +21,7 @@ class ContactValidationServiceTest extends TestCase
         $this->service = new ContactValidationService();
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_contact_creation_successfully()
     {
         $data = [
@@ -34,7 +35,7 @@ class ContactValidationServiceTest extends TestCase
         $this->assertEquals($data['phone'], $validated['phone']);
     }
 
-    /** @test */
+    #[Test]
     public function it_fails_if_email_is_not_unique()
     {
         Contact::factory()->create(['email' => 'test@example.com']);
@@ -46,7 +47,7 @@ class ContactValidationServiceTest extends TestCase
         $this->service->validate($data);
     }
 
-    /** @test */
+    #[Test]
     public function it_fails_if_required_fields_are_missing()
     {
         $data = [];
@@ -54,7 +55,7 @@ class ContactValidationServiceTest extends TestCase
         $this->service->validate($data);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_update_with_same_email()
     {
         $contact = Contact::factory()->create(['email' => 'test@example.com']);
